@@ -242,23 +242,53 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .carousel-container {
-    height: 450px;
+    height: 400px;
   }
   
   .slide-content {
-    left: 5%;
-    right: 5%;
-    max-width: 90%;
-    bottom: 15%;
+    position: absolute;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 80px;
+    transform: none;
+    width: 80%;
+    max-width: none;
+    margin: 0 auto;
     padding: 1rem;
   }
   
   .slide-content h2 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .slide-content p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+  
+  .carousel-controls {
+    bottom: 1rem;
+  }
+  
+  .carousel-control {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .control-icon {
     font-size: 1rem;
+  }
+  
+  .indicator {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
   }
 }
 </style> 
