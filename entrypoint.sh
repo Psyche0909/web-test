@@ -1,3 +1,4 @@
 #!/bin/bash
 cd /home/devbox/project
-npm run start
+npm install
+npm run dev

@@ -41,38 +41,45 @@
           <h2>项目进展</h2>
           <div class="progress-timeline">
             <div class="timeline-item">
-              <div class="timeline-year">2018年</div>
+              <div class="timeline-year">2月下旬</div>
               <div class="timeline-content">
                 <h3>项目启动</h3>
-                <p>徐州市政府批准《徐州工业遗产保护与利用规划》，正式启动工业遗产保护工作。</p>
+                <p>•	团队与导师交流确定项目命题、意义和远景，正式启动工业遗产大创项目。</p>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2019年</div>
+              <div class="timeline-year">3月上旬</div>
               <div class="timeline-content">
-                <h3>资源普查</h3>
-                <p>完成徐州地区工业遗产资源普查，建立工业遗产数据库。</p>
+                <h3>文献查阅</h3>
+                <p>•	查阅文献，了解工业遗产保护与利用的国内外研究现状，为项目开展提供理论支持。</p>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2020年</div>
+              <div class="timeline-year">3月下旬</div>
               <div class="timeline-content">
-                <h3>保护修缮</h3>
-                <p>对重点工业遗产进行保护修缮，启动煤矿博物馆改造工程。</p>
+                <h3>线上调研</h3>
+                <p>•	线上搜集徐州地区工业遗产现状资料，规划调研路线，设计、分发调研问卷。</p>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2021年</div>
+              <div class="timeline-year">4月上旬</div>
               <div class="timeline-content">
-                <h3>展示平台</h3>
-                <p>建设工业遗产展示平台，开发红色旅游路线，推出工业遗产体验活动。</p>
+                <h3>实地调研</h3>
+                <p>•	项目组成员分别往徐州利国驿铁矿遗址、权台煤矿遗址创业园、韩桥煤矿博物馆（韩桥煤矿旧址）等地进行实地考察，拍摄了大量照片并对工作人员进行了采访，获取了第一手资料，并对照片与采访稿进行了标注和分类整理，形成了较为完善的前期调研报告一份。</p>
               </div>
             </div>
             <div class="timeline-item">
-              <div class="timeline-year">2022年至今</div>
+              <div class="timeline-year">4月中旬</div>
+              <div class="timeline-content">
+                <h3>校内调研</h3>
+                <p>•	前往校史馆对徐州红色工业遗产的传承利用情况进行搜集、整理，与翟石磊老师进行访谈，了解相关情况。</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-year">至今</div>
               <div class="timeline-content">
                 <h3>持续推进</h3>
-                <p>持续推进工业遗产保护与利用，加强宣传推广，扩大社会影响。</p>
+                <p>•	项目持续推进工业遗产保护与利用，加强宣传推广，扩大社会影响。</p>
               </div>
             </div>
           </div>
@@ -82,9 +89,9 @@
           <h2>联系我们</h2>
           <p>如果您对徐州红色工业遗产保护项目有任何建议或想要参与其中，欢迎与我们联系。</p>
           <div class="contact-info">
-            <p><strong>地址：</strong>徐州市XX区XX路XX号</p>
-            <p><strong>电话：</strong>0516-XXXXXXXX</p>
-            <p><strong>邮箱：</strong>contact@xuzhou-heritage.org</p>
+            <p><strong>地址：</strong>江苏省徐州市大学路1号中国矿业大学南湖校区</p>
+            <p><strong>电话：</strong>XXXX-XXXXXXXX</p>
+            <p><strong>邮箱：</strong>xxxxxxxx@xx.com</p>
           </div>
         </div>
       </div>

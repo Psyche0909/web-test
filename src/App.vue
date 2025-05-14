@@ -25,8 +25,8 @@ import HeritageCard from './components/HeritageCard.vue'
       <div class="container">
         <div class="footer-content">
           <div class="footer-info">
-            <p>版权所有 © 2023 徐州红色工业遗产保护中心</p>
-            <p>地址：徐州市XX区XX路XX号</p>
+            <p>版权所有 © 2023 中矿大徐州红色工业遗产保护大创团队</p>
+            <p>地址：江苏省徐州市中国矿业大学</p>
           </div>
           <div class="footer-links">
             <a href="#">关于我们</a>

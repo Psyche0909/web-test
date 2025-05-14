@@ -135,7 +135,7 @@ onBeforeUnmount(() => {
 
 .carousel-slide {
   position: absolute;
-  top: 0;
+  top: -20px;
   left: 0;
   width: 100%;
   height: 100%;
@@ -152,8 +152,9 @@ onBeforeUnmount(() => {
 
 .slide-content {
   position: absolute;
-  bottom: 20%;
-  left: 10%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   max-width: 500px;
   color: var(--color-white);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);

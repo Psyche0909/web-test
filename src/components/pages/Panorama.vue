@@ -58,7 +58,7 @@
               </div>
             </div>
             
-            <div class="location-card">
+            <!-- <div class="location-card">
               <div class="location-image">
                 <img src="/images/heritage/textile.jpg" alt="徐州纺织厂">
               </div>
@@ -67,7 +67,7 @@
                 <p>全景体验纺织厂区，了解纺织工业历史</p>
                 <button class="btn btn-primary" disabled>即将上线</button>
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
