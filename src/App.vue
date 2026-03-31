@@ -2,6 +2,17 @@
 import NavBar from './components/NavBar.vue'
 import Carousel from './components/Carousel.vue'
 import HeritageCard from './components/HeritageCard.vue'
+import AiAssistantIcon from './components/AiAssistantIcon.vue'
+import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+
+const route = useRoute()
+
+// 只在特定页面显示AI助手图标
+const showAiAssistant = computed(() => {
+  const allowedPaths = ['/', '/panorama', '/culture']
+  return allowedPaths.includes(route.path)
+})
 </script>
 
 <template>
@@ -21,11 +32,14 @@ import HeritageCard from './components/HeritageCard.vue'
       <router-view></router-view>
     </main>
 
+    <!-- AI助手图标 -->
+    <AiAssistantIcon v-if="showAiAssistant && route.path !== '/ai-agent' && route.path !== '/ai-chat'" />
+
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-info">
-            <p>版权所有 © 2023 中矿大徐州红色工业遗产保护大创团队</p>
+            <p>版权所有 © 2025 中矿大徐州红色工业遗产大创团队</p>
             <p>地址：江苏省徐州市中国矿业大学</p>
           </div>
           <div class="footer-links">

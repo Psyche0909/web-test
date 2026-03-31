@@ -37,7 +37,10 @@
         <router-link to="/panorama" class="nav-link" @click="closeMobileMenu">全景地图</router-link>
       </li>
       <li class="nav-item">
-        <router-link to="/culture" class="nav-link" @click="closeMobileMenu">文创</router-link>
+        <router-link to="/culture" class="nav-link" @click="closeMobileMenu">工业文化</router-link>
+      </li>
+      <li class="nav-item">
+        <router-link to="/ai-agent" class="nav-link" @click="closeMobileMenu">AI智能体</router-link>
       </li>
     </ul>
   </nav>
@@ -207,7 +210,7 @@ const toggleDropdown = (dropdown) => {
     top: 80px;
     right: -100%;
     flex-direction: column;
-    width: 80%;
+    width: 45%;
     height: calc(100vh - 80px);
     background-color: var(--color-primary);
     transition: all 0.3s ease;

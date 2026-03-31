@@ -72,6 +72,18 @@ const routes = [
     name: 'Culture',
     // Lazy-loaded component
     component: () => import('./components/pages/Culture.vue')
+  },
+  {
+    path: '/ai-agent',
+    name: 'AiAgent',
+    // Lazy-loaded component
+    component: () => import('./components/pages/AiAgent.vue')
+  },
+  {
+    path: '/ai-chat',
+    name: 'AiChat',
+    // Lazy-loaded component
+    component: () => import('./components/pages/AiChat.vue')
   }
 ];
 
