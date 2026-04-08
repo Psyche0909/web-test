@@ -16,7 +16,7 @@
         
         <div class="site-card">
           <div class="site-image">
-            <img src="/images/heritage/railway.jpg" alt="徐州老火车站">
+            <img src="@/pic/徐州老火车站.png" alt="徐州老火车站">
           </div>
           <div class="site-info">
             <h3>徐州老火车站</h3>

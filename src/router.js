@@ -74,6 +74,24 @@ const routes = [
     component: () => import('./components/pages/Culture.vue')
   },
   {
+    path: '/culture/creative',
+    name: 'CultureCreative',
+    // Lazy-loaded component
+    component: () => import('./components/pages/CultureCreative.vue')
+  },
+  {
+    path: '/culture/digital-preservation',
+    name: 'DigitalPreservation',
+    // Lazy-loaded component
+    component: () => import('./components/pages/DigitalPreservation.vue')
+  },
+  {
+    path: '/guide',
+    name: 'Guide',
+    // Lazy-loaded component
+    component: () => import('./components/pages/Guide.vue')
+  },
+  {
     path: '/ai-agent',
     name: 'AiAgent',
     // Lazy-loaded component

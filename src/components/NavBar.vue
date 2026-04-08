@@ -33,11 +33,20 @@
       <li class="nav-item">
         <router-link to="/quiz" class="nav-link" @click="closeMobileMenu">答题游戏</router-link>
       </li>
-      <li class="nav-item">
-        <router-link to="/panorama" class="nav-link" @click="closeMobileMenu">全景地图</router-link>
+      <li class="nav-item dropdown" :class="{ 'active': isDropdownOpen.guideMap }">
+        <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleDropdown('guideMap')">导览地图</a>
+        <ul class="dropdown-menu">
+          <li><router-link to="/panorama" class="dropdown-item" @click="closeMobileMenu">全景地图</router-link></li>
+          <li><router-link to="/guide" class="dropdown-item" @click="closeMobileMenu">智能导览</router-link></li>
+        </ul>
       </li>
-      <li class="nav-item">
-        <router-link to="/culture" class="nav-link" @click="closeMobileMenu">工业文化</router-link>
+      <li class="nav-item dropdown" :class="{ 'active': isDropdownOpen.culture }">
+        <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleDropdown('culture')">工业文化</a>
+        <ul class="dropdown-menu">
+          <li><router-link to="/culture" class="dropdown-item" @click="closeMobileMenu">工业文化</router-link></li>
+          <li><router-link to="/culture/creative" class="dropdown-item" @click="closeMobileMenu">文化创意</router-link></li>
+          <li><router-link to="/culture/digital-preservation" class="dropdown-item" @click="closeMobileMenu">数字保存</router-link></li>
+        </ul>
       </li>
       <li class="nav-item">
         <router-link to="/ai-agent" class="nav-link" @click="closeMobileMenu">AI智能体</router-link>
@@ -52,7 +61,9 @@ import { ref, reactive } from 'vue';
 const isMobileMenuOpen = ref(false);
 const isDropdownOpen = reactive({
   heritage: false,
-  spirit: false
+  spirit: false,
+  guideMap: false,
+  culture: false
 });
 
 const toggleMobileMenu = () => {
@@ -60,6 +71,8 @@ const toggleMobileMenu = () => {
   // Close all dropdowns when toggling the mobile menu
   isDropdownOpen.heritage = false;
   isDropdownOpen.spirit = false;
+  isDropdownOpen.guideMap = false;
+  isDropdownOpen.culture = false;
 };
 
 const closeMobileMenu = () => {
@@ -67,6 +80,8 @@ const closeMobileMenu = () => {
   // Close all dropdowns
   isDropdownOpen.heritage = false;
   isDropdownOpen.spirit = false;
+  isDropdownOpen.guideMap = false;
+  isDropdownOpen.culture = false;
 };
 
 const toggleDropdown = (dropdown) => {

@@ -16,7 +16,7 @@
         
         <div class="site-card">
           <div class="site-image">
-            <img src="/images/heritage/panhan-lake.jpg" alt="潘安湖矿坑公园">
+            <img src="@/pic/潘安湖公园.png" alt="潘安湖矿坑公园">
           </div>
           <div class="site-info">
             <h3>潘安湖矿坑公园</h3>

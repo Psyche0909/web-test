@@ -16,7 +16,7 @@
         
         <div class="site-card">
           <div class="site-image">
-            <img src="/images/heritage/textile.jpg" alt="徐州纺织厂">
+            <img src="@/pic/徐州毛纺厂.png" alt="徐州纺织厂">
           </div>
           <div class="site-info">
             <h3>徐州纺织厂</h3>

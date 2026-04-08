@@ -20,7 +20,7 @@
           
           <div class="site-card">
             <div class="site-image">
-              <img src="/images/heritage/coal-museum.jpg" alt="徐州煤矿博物馆">
+              <img src="@/pic/煤矿博物馆.png" alt="徐州煤矿博物馆">
             </div>
             <div class="site-info">
               <h3>徐州煤矿博物馆</h3>
@@ -37,7 +37,7 @@
           
           <div class="site-card">
             <div class="site-image">
-              <img src="/images/heritage/panhan-lake.jpg" alt="潘安湖矿坑公园">
+              <img src="@/pic/潘安湖公园.png" alt="潘安湖矿坑公园">
             </div>
             <div class="site-info">
               <h3>潘安湖矿坑公园</h3>
@@ -54,7 +54,7 @@
           
           <div class="site-card">
             <div class="site-image">
-              <img src="/images/heritage/old-mine-shaft.jpg" alt="大屯老矿井">
+              <img src="@/pic/大屯老矿井.png" alt="大屯老矿井">
             </div>
             <div class="site-info">
               <h3>大屯老矿井</h3>

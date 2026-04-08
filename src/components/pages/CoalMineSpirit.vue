@@ -16,7 +16,7 @@
         
         <div class="spirit-content">
           <div class="spirit-image">
-            <img src="/images/heritage/coal-mine.jpg" alt="煤矿工人">
+            <img src="@/pic/煤矿工人照片.png" alt="煤矿工人">
           </div>
           <div class="spirit-text">
             <h3>艰苦奋斗</h3>

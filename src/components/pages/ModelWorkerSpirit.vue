@@ -17,7 +17,7 @@
         <div class="model-workers">
           <div class="worker-card">
             <div class="worker-image">
-              <img src="/images/heritage/coal-mine.jpg" alt="煤矿劳模">
+              <img src="@/pic/煤矿工人照片.png" alt="煤矿劳模">
             </div>
             <div class="worker-info">
               <h3>煤矿劳模</h3>
@@ -27,7 +27,7 @@
           
           <div class="worker-card">
             <div class="worker-image">
-              <img src="/images/heritage/railway.jpg" alt="铁路劳模">
+              <img src="@/pic/徐州老火车站.png" alt="铁路劳模">
             </div>
             <div class="worker-info">
               <h3>铁路劳模</h3>
@@ -37,7 +37,7 @@
           
           <div class="worker-card">
             <div class="worker-image">
-              <img src="/images/heritage/textile.jpg" alt="纺织劳模">
+              <img src="@/pic/徐州毛纺厂.png" alt="纺织劳模">
             </div>
             <div class="worker-info">
               <h3>纺织劳模</h3>

@@ -44,33 +44,37 @@
 <script setup>
 import Carousel from '../Carousel.vue';
 import HeritageCard from '../HeritageCard.vue';
+import coalMineImage from '@/pic/贾汪韩桥煤矿.png';
+import railwayImage from '@/pic/徐州老火车站.png';
+import textileImage from '@/pic/徐州毛纺厂.png';
+import pananLakeImage from '@/pic/潘安湖公园.png';
 
 const heritages = [
   {
     id: 1,
     title: '贾汪煤矿遗址',
-    image: '/images/heritage/coal-mine.jpg',
+    image: coalMineImage,
     description: '始建于1958年，见证了徐州煤炭工业的发展历程',
     link: '/heritage/coal-mine'
   },
   {
     id: 2,
     title: '徐州老火车站',
-    image: '/images/heritage/railway.jpg',
+    image: railwayImage,
     description: '建于1934年，是徐州铁路发展的重要历史见证',
     link: '/heritage/railway'
   },
   {
     id: 3,
     title: '徐州纺织厂',
-    image: '/images/heritage/textile.jpg',
+    image: textileImage,
     description: '创建于1952年，曾是华东地区最大的纺织生产基地之一',
     link: '/heritage/textile'
   },
   {
     id: 4,
     title: '潘安湖矿坑公园',
-    image: '/images/heritage/panhan-lake.jpg',
+    image: pananLakeImage,
     description: '由废弃矿坑改造而成，展示工业遗址生态修复成果',
     link: '/heritage/panhan-lake'
   }

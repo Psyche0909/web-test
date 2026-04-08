@@ -51,7 +51,7 @@
           placeholder="请输入你的问题..." 
           @keyup.enter="sendMessage"
         />
-        <button class="send-button" :disabled="!userInput.trim()" @click="sendMessage">
+        <button class="send-button" :disabled="!userInput.trim() || isSending" @click="sendMessage">
           <i class="icon-send"></i>
         </button>
       </div>
@@ -67,17 +67,98 @@ const router = useRouter();
 const userInput = ref('');
 const messages = ref([]);
 const chatMessagesRef = ref(null);
+const isSending = ref(false);
+const demoMode = String(import.meta.env.VITE_AI_DEMO || '').toLowerCase() === 'true';
 
-const aiResponses = {
-  default: "我理解你的问题，让我思考一下怎么回答...",
-  greeting: "你好！很高兴见到你。我可以回答你关于徐州红色工业遗产的问题。",
-  history: "徐州是中国重要的工业城市，有着丰富的工业遗产。从煤矿、铁路到纺织工业，徐州的工业历史可以追溯到19世纪末和20世纪初。这些工业设施见证了中国工业化的进程和徐州的发展。",
-  mine: "潘安湖矿坑公园是以废弃露天矿坑为基础改造的生态公园，是工业遗址生态修复的典范。公园内保留了原有的工业设施，同时进行了生态修复，形成了独特的景观。",
-  railway: "徐州铁路遗产包括徐州老火车站、徐州铁路博物馆等。徐州是中国重要的铁路枢纽，铁路的发展对徐州的工业发展起到了重要推动作用。",
-  textile: "徐州的纺织工业遗产主要包括老纺织厂和相关设施。这些遗产反映了徐州纺织工业的发展历程，是徐州工业文化的重要组成部分。"
+const aiFallbackMessage = '暂时无法连接千问智能体，请稍后再试。';
+
+const localQaRules = [
+  {
+    keywords: ['你好', 'hello', 'hi'],
+    answer: '你好，我是小徐。今天我可以带你快速了解徐州红色工业遗产的历史脉络与代表点位。',
+  },
+  {
+    keywords: ['徐州', '工业遗产', '概况'],
+    answer: '徐州工业遗产以煤矿、铁路和纺织为主线，既有生产设施遗址，也有工人生活与城市工业化记忆。',
+  },
+  {
+    keywords: ['煤矿', '潘安湖', '矿坑'],
+    answer: '潘安湖矿坑公园是典型的“工业遗址生态修复”案例，从采煤沉陷区转型为生态与文旅融合空间。',
+  },
+  {
+    keywords: ['铁路', '火车站', '枢纽'],
+    answer: '徐州是重要铁路枢纽，老火车站等遗存见证了区域交通与工业扩张的关键阶段。',
+  },
+  {
+    keywords: ['纺织', '毛纺厂', '纺织厂'],
+    answer: '徐州纺织遗产反映了近现代轻工业体系的发展，厂区建筑与设备布局体现了当时的生产组织方式。',
+  },
+  {
+    keywords: ['精神', '劳模', '工匠'],
+    answer: '徐州工业精神可以概括为：艰苦奋斗、协同攻坚、技术创新与工匠传承，这些精神仍在当代产业中延续。',
+  },
+  {
+    keywords: ['路线', '参观', '打卡', '推荐'],
+    answer: '演示路线建议：潘安湖矿坑公园 → 铁路遗产点 → 纺织遗产点。可按“生态修复-交通发展-产业变迁”叙事讲解。',
+  },
+  {
+    keywords: ['谢谢', '再见', 'bye'],
+    answer: '不客气，欢迎继续提问。你也可以让我按“时间线”或“主题线”再讲一遍。',
+  },
+];
+
+const getLocalDemoReply = (prompt) => {
+  const normalized = String(prompt || '').toLowerCase();
+  const hit = localQaRules.find((rule) => rule.keywords.some((kw) => normalized.includes(kw.toLowerCase())));
+  return hit?.answer || '这是本地演示回答：徐州红色工业遗产融合了工业历史、城市记忆和生态更新，是很适合做沉浸式讲解的主题。';
+};
+
+const getAiReply = async (prompt) => {
+  const response = await fetch('/api/qwen-agent', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      input: {
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      },
+      parameters: {
+        incremental_output: false,
+      },
+      debug: {},
+    }),
+  });
+
+  if (!response.ok) {
+    let errCode = `HTTP_${response.status}`;
+    let errMessage = '请求失败';
+
+    try {
+      const errData = await response.json();
+      errCode = errData?.code || errCode;
+      errMessage = errData?.message || errMessage;
+    } catch (e) {
+      // Keep default fallback if response body is not JSON.
+    }
+
+    throw new Error(`${errCode}: ${errMessage}`);
+  }
+
+  const data = await response.json();
+  return data?.output?.text?.trim()
+    || data?.output?.choices?.[0]?.message?.content?.trim()
+    || aiFallbackMessage;
 };
 
 const sendMessage = async () => {
+  if (isSending.value) return;
+
   const userMessage = userInput.value.trim();
   if (!userMessage) return;
   
@@ -93,33 +174,39 @@ const sendMessage = async () => {
   await nextTick();
   scrollToBottom();
   
-  // Simulate thinking delay
-  setTimeout(() => {
-    // Generate AI response based on user input
-    let aiResponse = aiResponses.default;
-    
-    if (userMessage.includes('你好') || userMessage.includes('hi') || userMessage.includes('hello')) {
-      aiResponse = aiResponses.greeting;
-    } else if (userMessage.includes('历史') || userMessage.includes('工业历史')) {
-      aiResponse = aiResponses.history;
-    } else if (userMessage.includes('煤矿') || userMessage.includes('潘安湖')) {
-      aiResponse = aiResponses.mine;
-    } else if (userMessage.includes('铁路')) {
-      aiResponse = aiResponses.railway;
-    } else if (userMessage.includes('纺织')) {
-      aiResponse = aiResponses.textile;
-    }
-    
+  isSending.value = true;
+
+  if (demoMode) {
+    messages.value.push({
+      content: getLocalDemoReply(userMessage),
+      sender: 'ai'
+    });
+    isSending.value = false;
+    nextTick().then(() => {
+      scrollToBottom();
+    });
+    return;
+  }
+
+  try {
+    const aiResponse = await getAiReply(userMessage);
+
     messages.value.push({
       content: aiResponse,
       sender: 'ai'
     });
-    
-    // Wait for DOM update
+  } catch (error) {
+    console.error(error);
+    messages.value.push({
+      content: `连接失败：${error?.message || aiFallbackMessage}\n\n已切换为本地演示回答：${getLocalDemoReply(userMessage)}`,
+      sender: 'ai'
+    });
+  } finally {
+    isSending.value = false;
     nextTick().then(() => {
       scrollToBottom();
     });
-  }, 1000);
+  }
 };
 
 const scrollToBottom = () => {

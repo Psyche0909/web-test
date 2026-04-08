@@ -16,7 +16,7 @@
         
         <div class="spirit-content">
           <div class="spirit-image">
-            <img src="/images/heritage/railway.jpg" alt="铁路工人">
+            <img src="@/pic/徐州老火车站.png" alt="铁路工人">
           </div>
           <div class="spirit-text">
             <p>页面内容待完善</p>

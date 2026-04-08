@@ -40,30 +40,34 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import coalMuseumImage from '@/pic/煤矿博物馆.png';
+import railwayStationImage from '@/pic/徐州老火车站.png';
+import pananLakeImage from '@/pic/潘安湖公园.png';
+import textileFactoryImage from '@/pic/徐州毛纺厂.png';
 
 const slides = [
   {
     title: '徐州煤矿博物馆',
     description: '见证百年采煤历史，传承红色工业记忆',
-    image: '/images/carousel/coal-museum.jpg',
+    image: coalMuseumImage,
     link: '/heritage/coal-museum'
   },
   {
     title: '徐州老火车站',
     description: '铁路交通发展的历史见证',
-    image: '/images/carousel/railway-station.jpg',
+    image: railwayStationImage,
     link: '/heritage/railway-station'
   },
   {
     title: '潘安湖矿坑公园',
     description: '工业遗址生态修复的典范',
-    image: '/images/carousel/panhan-lake.jpg',
+    image: pananLakeImage,
     link: '/heritage/panhan-lake'
   },
   {
     title: '徐州纺织厂',
     description: '华东地区重要的纺织工业遗产',
-    image: '/images/carousel/textile-factory.jpg',
+    image: textileFactoryImage,
     link: '/heritage/textile-factory'
   }
 ];
