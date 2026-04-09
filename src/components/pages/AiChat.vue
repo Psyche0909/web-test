@@ -27,7 +27,7 @@
             <img src="../../assets/ai-avatar.png" alt="AI Avatar" />
           </div>
           <div class="message">
-            <p>{{ msg.content }}</p>
+            <div class="message-content" :class="{ pending: msg.pending }" v-html="renderMessageContent(getMessageRenderContent(msg))"></div>
           </div>
         </template>
         <template v-else>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -68,9 +68,17 @@ const userInput = ref('');
 const messages = ref([]);
 const chatMessagesRef = ref(null);
 const isSending = ref(false);
-const demoMode = String(import.meta.env.VITE_AI_DEMO || '').toLowerCase() === 'true';
+const typingTimers = new Map();
 
 const aiFallbackMessage = '暂时无法连接千问智能体，请稍后再试。';
+const assistantSystemPrompt = [
+  '你是“徐州红色工业遗产智能助手”，请用中文回答。',
+  '回答要自然、准确、信息密度高，优先结合徐州煤矿、铁路、纺织和工业精神相关内容。',
+  '默认采用“先给结论，再分 2 到 4 点展开，最后给一个可执行建议”的结构。',
+  '如果用户的问题比较含糊，先说明可能的理解方向，再给最可能的答案，不要只复述问题。',
+  '如果用户的问题与徐州红色工业遗产无关，也要正常回答，不要只返回固定模板。',
+].join(' ');
+const loadingMessage = '正在思考，请稍等...';
 
 const localQaRules = [
   {
@@ -113,25 +121,265 @@ const getLocalDemoReply = (prompt) => {
   return hit?.answer || '这是本地演示回答：徐州红色工业遗产融合了工业历史、城市记忆和生态更新，是很适合做沉浸式讲解的主题。';
 };
 
-const getAiReply = async (prompt) => {
-  const response = await fetch('/api/qwen-agent', {
+const getLocalKnowledgeHint = (prompt) => {
+  const normalized = String(prompt || '').toLowerCase();
+  const hit = localQaRules.filter((rule) => rule.keywords.some((kw) => normalized.includes(kw.toLowerCase())));
+
+  return hit.length
+    ? `本地参考知识：\n${hit.map((item, index) => `${index + 1}. ${item.answer}`).join('\n')}`
+    : '';
+};
+
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const formatInlineText = (value) => escapeHtml(value)
+  .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+const getMessageRenderContent = (message) => message?.displayContent ?? message?.content ?? '';
+
+const clearTypingTimer = (index) => {
+  const timerId = typingTimers.get(index);
+  if (timerId) {
+    clearInterval(timerId);
+    typingTimers.delete(index);
+  }
+};
+
+const finalizeTypingMessage = (index, content) => {
+  clearTypingTimer(index);
+  const message = messages.value[index];
+  if (!message) return;
+
+  messages.value[index] = {
+    ...message,
+    content,
+    displayContent: content,
+    pending: false,
+  };
+};
+
+const animateTypingMessage = (index, content, options = {}) => {
+  const { immediate = false } = options;
+  const message = messages.value[index];
+  if (!message) return;
+
+  const targetContent = String(content ?? '');
+
+  if (immediate) {
+    finalizeTypingMessage(index, targetContent);
+    return;
+  }
+
+  messages.value[index] = {
+    ...message,
+    content: targetContent,
+    displayContent: String(message.displayContent ?? message.content ?? ''),
+    pending: true,
+  };
+
+  if (typingTimers.has(index)) {
+    return;
+  }
+
+  const timerId = setInterval(() => {
+    const currentMessage = messages.value[index];
+    if (!currentMessage) {
+      clearTypingTimer(index);
+      return;
+    }
+
+    const visibleContent = String(currentMessage.displayContent ?? '');
+    const currentTarget = String(currentMessage.content ?? '');
+
+    if (visibleContent.length >= currentTarget.length) {
+      messages.value[index] = {
+        ...currentMessage,
+        displayContent: currentTarget,
+        pending: false,
+      };
+      clearTypingTimer(index);
+      return;
+    }
+
+    const remaining = currentTarget.length - visibleContent.length;
+    const step = Math.max(1, Math.ceil(remaining / 6));
+    const nextVisible = currentTarget.slice(0, visibleContent.length + step);
+
+    messages.value[index] = {
+      ...currentMessage,
+      displayContent: nextVisible,
+      pending: true,
+    };
+  }, 24);
+
+  typingTimers.set(index, timerId);
+};
+
+const extractDeltaText = (payload) => {
+  const choice = payload?.choices?.[0] || payload?.output?.choices?.[0];
+  return choice?.delta?.content
+    || choice?.message?.content
+    || payload?.output?.text
+    || payload?.text
+    || '';
+};
+
+const readStreamText = async (response, onDelta) => {
+  if (!response.body) {
+    throw new Error('流式响应不可用');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+
+  const flushEvent = (eventText) => {
+    const dataLines = eventText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trim());
+
+    if (!dataLines.length) return;
+
+    const dataText = dataLines.join('\n');
+    if (!dataText || dataText === '[DONE]') return;
+
+    try {
+      const payload = JSON.parse(dataText);
+      const deltaText = extractDeltaText(payload);
+      if (deltaText) {
+        onDelta(deltaText);
+      }
+    } catch (error) {
+      const plainText = dataText.replace(/^"|"$/g, '');
+      if (plainText && plainText !== '[DONE]') {
+        onDelta(plainText);
+      }
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    let separatorIndex = buffer.indexOf('\n\n');
+    while (separatorIndex !== -1) {
+      const eventText = buffer.slice(0, separatorIndex).trim();
+      buffer = buffer.slice(separatorIndex + 2);
+      if (eventText) {
+        flushEvent(eventText);
+      }
+      separatorIndex = buffer.indexOf('\n\n');
+    }
+  }
+
+  const tail = buffer.trim();
+  if (tail) {
+    flushEvent(tail);
+  }
+};
+
+const renderMessageContent = (content) => {
+  const lines = String(content ?? '').replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let paragraphLines = [];
+  let listItems = [];
+  let listType = null;
+
+  const flushParagraph = () => {
+    if (!paragraphLines.length) return;
+    blocks.push(`<p>${paragraphLines.join('<br>')}</p>`);
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const tagName = listType === 'ordered' ? 'ol' : 'ul';
+    blocks.push(`<${tagName}>${listItems.map((item) => `<li>${item}</li>`).join('')}</${tagName}>`);
+    listItems = [];
+    listType = null;
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const bulletMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+    const orderedMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    if (bulletMatch || orderedMatch) {
+      flushParagraph();
+
+      const currentType = orderedMatch ? 'ordered' : 'unordered';
+      if (listType && listType !== currentType) {
+        flushList();
+      }
+
+      listType = currentType;
+      listItems.push(formatInlineText((bulletMatch || orderedMatch)[1]));
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(formatInlineText(trimmed));
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks.join('');
+};
+
+const buildConversationMessages = (prompt) => {
+  const recentMessages = messages.value
+    .filter((message) => message.sender === 'user' || message.sender === 'ai')
+    .filter((message) => !message.pending)
+    .slice(0, -1)
+    .slice(-6)
+    .map((message) => ({
+      role: message.sender === 'user' ? 'user' : 'assistant',
+      content: message.content,
+    }));
+
+  return [
+    {
+      role: 'system',
+      content: [assistantSystemPrompt, getLocalKnowledgeHint(prompt)].filter(Boolean).join('\n\n'),
+    },
+    ...recentMessages,
+    {
+      role: 'user',
+      content: prompt,
+    },
+  ];
+};
+
+const getAiReply = async (prompt, onDelta) => {
+  const response = await fetch('/api/qwen-chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      input: {
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      },
-      parameters: {
-        incremental_output: false,
-      },
-      debug: {},
+      model: 'qwen-plus',
+      messages: buildConversationMessages(prompt),
+      temperature: 0.6,
+      top_p: 0.85,
+      stream: true,
+      max_tokens: 650,
     }),
   });
 
@@ -150,10 +398,26 @@ const getAiReply = async (prompt) => {
     throw new Error(`${errCode}: ${errMessage}`);
   }
 
+  if (response.headers.get('content-type')?.includes('text/event-stream')) {
+    let content = '';
+    await readStreamText(response, (deltaText) => {
+      content += deltaText;
+      if (typeof onDelta === 'function') {
+        onDelta(content);
+      }
+    });
+
+    return {
+      text: content.trim() || aiFallbackMessage,
+      streamed: true,
+    };
+  }
+
   const data = await response.json();
-  return data?.output?.text?.trim()
-    || data?.output?.choices?.[0]?.message?.content?.trim()
-    || aiFallbackMessage;
+  return {
+    text: extractDeltaText(data).trim() || aiFallbackMessage,
+    streamed: false,
+  };
 };
 
 const sendMessage = async () => {
@@ -175,32 +439,26 @@ const sendMessage = async () => {
   scrollToBottom();
   
   isSending.value = true;
-
-  if (demoMode) {
-    messages.value.push({
-      content: getLocalDemoReply(userMessage),
-      sender: 'ai'
-    });
-    isSending.value = false;
-    nextTick().then(() => {
-      scrollToBottom();
-    });
-    return;
-  }
+  const pendingMessageIndex = messages.value.push({
+    content: loadingMessage,
+    displayContent: loadingMessage,
+    sender: 'ai',
+    pending: true,
+  }) - 1;
 
   try {
-    const aiResponse = await getAiReply(userMessage);
-
-    messages.value.push({
-      content: aiResponse,
-      sender: 'ai'
+    const aiResult = await getAiReply(userMessage, (content) => {
+      animateTypingMessage(pendingMessageIndex, content);
     });
+
+    animateTypingMessage(pendingMessageIndex, aiResult.text, { immediate: !aiResult.streamed });
   } catch (error) {
     console.error(error);
-    messages.value.push({
-      content: `连接失败：${error?.message || aiFallbackMessage}\n\n已切换为本地演示回答：${getLocalDemoReply(userMessage)}`,
-      sender: 'ai'
-    });
+    messages.value[pendingMessageIndex] = {
+      content: `连接失败：${error?.message || aiFallbackMessage}\n\n本地参考回答：${getLocalDemoReply(userMessage)}`,
+      displayContent: `连接失败：${error?.message || aiFallbackMessage}\n\n本地参考回答：${getLocalDemoReply(userMessage)}`,
+      sender: 'ai',
+    };
   } finally {
     isSending.value = false;
     nextTick().then(() => {
@@ -223,6 +481,11 @@ onMounted(() => {
   scrollToBottom();
 });
 
+onBeforeUnmount(() => {
+  typingTimers.forEach((timerId) => clearInterval(timerId));
+  typingTimers.clear();
+});
+
 watch(messages, () => {
   nextTick().then(() => {
     scrollToBottom();
@@ -234,8 +497,15 @@ watch(messages, () => {
 .chat-container {
   display: flex;
   flex-direction: column;
+  width: min(1200px, calc(100% - 32px));
+  max-width: 1200px;
+  min-width: 0;
   height: calc(100vh - 80px);
   background-color: #F5F5F5;
+  margin: 0 auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
 }
 
 .chat-header {
@@ -286,15 +556,18 @@ watch(messages, () => {
   flex: 1;
   padding: 15px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .message-wrapper {
   display: flex;
   gap: 10px;
   max-width: 80%;
+  min-width: 0;
 }
 
 .message-wrapper.user {
@@ -338,6 +611,64 @@ watch(messages, () => {
   padding: 12px 15px;
   border-radius: 18px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.message-content {
+  line-height: 1.7;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.message-content.pending::after {
+  content: '▍';
+  display: inline-block;
+  margin-left: 2px;
+  color: #2FBB96;
+  animation: caretBlink 1s steps(1) infinite;
+}
+
+.message-content :deep(p) {
+  margin: 0 0 10px;
+}
+
+.message-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.message-content :deep(ul),
+.message-content :deep(ol) {
+  margin: 0 0 10px 20px;
+  padding-left: 18px;
+}
+
+.message-content :deep(li) {
+  margin: 4px 0;
+}
+
+.message-content :deep(strong) {
+  font-weight: 700;
+}
+
+.message-content :deep(code) {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #eef2f7;
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+@keyframes caretBlink {
+  0%, 49% {
+    opacity: 1;
+  }
+
+  50%, 100% {
+    opacity: 0;
+  }
 }
 
 .message-wrapper.user .message {
@@ -405,6 +736,11 @@ watch(messages, () => {
 @media (max-width: 768px) {
   .message-wrapper {
     max-width: 90%;
+  }
+
+  .chat-container {
+    width: min(100%, calc(100% - 16px));
+    max-width: 100%;
   }
 }
 </style> 

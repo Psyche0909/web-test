@@ -115,6 +115,8 @@ body {
 main {
   margin-top: 80px;
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .hero-section {
