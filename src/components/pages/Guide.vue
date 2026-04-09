@@ -190,6 +190,12 @@ const loadAmapScript = () => {
   return amapLoaderPromise;
 };
 
+const loadAmapPlugins = (plugins) => new Promise((resolve) => {
+  window.AMap.plugin(plugins, () => {
+    resolve(window.AMap);
+  });
+});
+
 const destroyMap = () => {
   stopSpeech();
 
@@ -214,6 +220,11 @@ const stopSpeech = () => {
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
   }
+};
+
+const closeSiteCard = () => {
+  activeSite.value = null;
+  stopSpeech();
 };
 
 const playSiteIntro = (site) => {
@@ -328,6 +339,8 @@ const useSearchResult = (poi) => {
     return;
   }
 
+  closeSiteCard();
+
   const target = [poi.location.lng, poi.location.lat];
 
   if (!searchMarker) {
@@ -361,6 +374,9 @@ const searchPlace = () => {
     routeStatus.value = '请先输入要搜索的地点';
     return;
   }
+
+  closeSiteCard();
+
   if (!placeSearchService) {
     routeStatus.value = '搜索插件未就绪，请稍后重试';
     return;
@@ -477,7 +493,9 @@ const loadMap = async () => {
 
   try {
     await loadAmapScript();
+    await loadAmapPlugins(['AMap.ToolBar', 'AMap.Scale', 'AMap.PlaceSearch', 'AMap.Driving', 'AMap.Walking']);
     await nextTick();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     if (!mapRef.value) {
       throw new Error('地图容器未就绪');
@@ -516,6 +534,7 @@ const loadMap = async () => {
 
     addHeritageMarkers();
     startLocationWatch();
+    mapInstance.resize();
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : '地图加载失败';
   } finally {

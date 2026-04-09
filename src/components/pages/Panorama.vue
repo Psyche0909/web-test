@@ -205,6 +205,12 @@ const loadAmapScript = () => {
   return amapLoaderPromise;
 };
 
+const loadAmapPlugins = (plugins) => new Promise((resolve) => {
+  window.AMap.plugin(plugins, () => {
+    resolve(window.AMap);
+  });
+});
+
 const openSceneInfo = (scene) => {
   if (!infoWindow || !mapInstance) {
     return;
@@ -266,7 +272,9 @@ const loadMap = async () => {
 
   try {
     await loadAmapScript();
+    await loadAmapPlugins(['AMap.ToolBar', 'AMap.Scale']);
     await nextTick();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
     if (!mapRef.value) {
       return;
@@ -293,6 +301,7 @@ const loadMap = async () => {
     const initialScene = scenes.find((scene) => scene.id === activeSceneId.value) || scenes[0];
     mapInstance.setZoomAndCenter(13, initialScene.position);
     openSceneInfo(initialScene);
+    mapInstance.resize();
   } catch (error) {
     mapLoadError.value = error instanceof Error ? error.message : '地图加载失败，请稍后再试';
   }
