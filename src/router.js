@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from './components/pages/HomePage.vue';
 import CoalMineHeritage from './components/pages/CoalMineHeritage.vue';
 import QuizGame from './components/pages/QuizGame.vue';
+import OtherSpirit from './components/pages/OtherSpirit.vue';
 
 const routes = [
   {
@@ -55,6 +56,11 @@ const routes = [
     name: 'ModelWorkerSpirit',
     // Lazy-loaded component
     component: () => import('./components/pages/ModelWorkerSpirit.vue')
+  },
+  {
+    path: '/spirit/others',
+    name: 'OtherSpirit',
+    component: OtherSpirit
   },
   {
     path: '/quiz',

@@ -79,6 +79,9 @@ const assistantSystemPrompt = [
   '如果用户的问题与徐州红色工业遗产无关，也要正常回答，不要只返回固定模板。',
 ].join(' ');
 const loadingMessage = '正在思考，请稍等...';
+const qwenApiKey = import.meta.env.VITE_QWEN_API_KEY || import.meta.env.QWEN_API_KEY || '';
+const qwenApiBaseUrl = import.meta.env.VITE_QWEN_API_BASE || 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+const qwenModel = import.meta.env.VITE_QWEN_MODEL || import.meta.env.QWEN_MODEL || 'qwen-vl-plus-2025-05-07';
 
 const localQaRules = [
   {
@@ -368,56 +371,95 @@ const buildConversationMessages = (prompt) => {
 };
 
 const getAiReply = async (prompt, onDelta) => {
-  const response = await fetch('/api/qwen-chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'qwen-plus',
-      messages: buildConversationMessages(prompt),
-      temperature: 0.6,
-      top_p: 0.85,
-      stream: true,
-      max_tokens: 650,
-    }),
-  });
+  const requestBody = {
+    model: qwenModel,
+    messages: buildConversationMessages(prompt),
+    temperature: 0.6,
+    top_p: 0.85,
+    stream: true,
+    max_tokens: 650,
+  };
 
-  if (!response.ok) {
-    let errCode = `HTTP_${response.status}`;
-    let errMessage = '请求失败';
+  const requestTargets = [];
 
-    try {
-      const errData = await response.json();
-      errCode = errData?.code || errCode;
-      errMessage = errData?.message || errMessage;
-    } catch (e) {
-      // Keep default fallback if response body is not JSON.
-    }
-
-    throw new Error(`${errCode}: ${errMessage}`);
+  if (qwenApiKey) {
+    requestTargets.push({
+      url: qwenApiBaseUrl,
+      headers: {
+        Authorization: `Bearer ${qwenApiKey}`,
+      },
+    });
   }
 
-  if (response.headers.get('content-type')?.includes('text/event-stream')) {
-    let content = '';
-    await readStreamText(response, (deltaText) => {
-      content += deltaText;
-      if (typeof onDelta === 'function') {
-        onDelta(content);
-      }
-    });
+  requestTargets.push({
+    url: '/api/qwen-chat',
+    headers: {},
+  });
 
+  let lastError = null;
+
+  for (const target of requestTargets) {
+    let response;
+
+    try {
+      response = await fetch(target.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...target.headers,
+        },
+        body: JSON.stringify(requestBody),
+      });
+    } catch (error) {
+      lastError = error;
+      continue;
+    }
+
+    if (!response.ok) {
+      let errCode = `HTTP_${response.status}`;
+      let errMessage = '请求失败';
+
+      try {
+        const errData = await response.json();
+        errCode = errData?.code || errCode;
+        errMessage = errData?.message || errMessage;
+      } catch (error) {
+        // Keep the default fallback if the response body is not JSON.
+      }
+
+      const isAuthError = response.status === 401 || response.status === 403;
+      lastError = new Error(`${errCode}: ${errMessage}`);
+
+      if (isAuthError && target.url !== '/api/qwen-chat') {
+        continue;
+      }
+
+      throw lastError;
+    }
+
+    if (response.headers.get('content-type')?.includes('text/event-stream')) {
+      let content = '';
+      await readStreamText(response, (deltaText) => {
+        content += deltaText;
+        if (typeof onDelta === 'function') {
+          onDelta(content);
+        }
+      });
+
+      return {
+        text: content.trim() || aiFallbackMessage,
+        streamed: true,
+      };
+    }
+
+    const data = await response.json();
     return {
-      text: content.trim() || aiFallbackMessage,
-      streamed: true,
+      text: extractDeltaText(data).trim() || aiFallbackMessage,
+      streamed: false,
     };
   }
 
-  const data = await response.json();
-  return {
-    text: extractDeltaText(data).trim() || aiFallbackMessage,
-    streamed: false,
-  };
+  throw lastError || new Error('请求失败');
 };
 
 const sendMessage = async () => {
